@@ -1,0 +1,16 @@
+title: Delicate by Design: 1965 Fiat 850 Spider
+imageAlt: Fiat 850 Spider 
+series: 1st generation
+year: 1965
+mileage: 83,000 km
+displacement: 843 cc
+power: 49 HP
+transmission: 4-speed manual
+price: 14,000 €
+
+description:
+First registered in April 1965, this Fiat 850 Spider represents a distinctive chapter in Italian automotive history. With its elegant lines and unmistakable vintage charm, it remains a lovely example of the era's approach to small, stylish sports cars.
+
+The car is fully functional and has undergone several maintenance works, including replacement of the brake master cylinder, left driveshaft, water pump and battery, as well as radiator cleaning and coolant replacement.
+
+history: 
