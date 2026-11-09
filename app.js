@@ -14,13 +14,22 @@
 
    The site finds the photos by itself: it tries 01, 02, 03 ... until a
    file is missing. Empty lines and lines starting with # are ignored.
+
+   Each car folder also holds its data file  <line>-00-Card.txt  :
+
+     assets/Bianchina-1962-Rimini/Bianchina-1962-Rimini-00-Card.txt
+
+   with "key: value" lines (title, imageAlt, series, year, mileage,
+   displacement, power, transmission, price, description, history).
+   description / history may continue over several lines; a blank line
+   starts a new paragraph. A value of n/a (or empty) is simply not shown.
    ------------------------------------------------------------------ */
 const CARS_FILE = 'cars.txt';
 
-/* OPTIONAL extra info, keyed by the Model part of the line.
-   Without an entry the model name is just prettified ("FulviaHF" → "Fulvia HF").
-   Any of these keys may be added: name, category (coupe | spider | saloon),
-   price, mileage, engine, power, gearbox, fuel, drive, condition, story. */
+/* FALLBACKS, keyed by the Model part of the line. Used only for what the
+   car's Card.txt does not provide (or when it is missing). "category"
+   (coupe | spider | saloon) drives the home page filters; it can also be
+   given in Card.txt as a "category:" line. */
 const CAR_INFO = {
   "GTScalino":  {name:"Alfa Romeo Giulia GT Scalino", category:"coupe"},
   "Testarossa": {name:"Ferrari Testarossa",           category:"coupe"},
@@ -30,7 +39,7 @@ const CAR_INFO = {
   "FulviaHF":   {name:"Lancia Fulvia HF",             category:"coupe"}
 };
 const CATEGORY_LABEL = {coupe:'COUPÉ', spider:'SPIDER', saloon:'BERLINA'};
-const SPEC_ROWS = [['year','Год выпуска'],['location','Местонахождение'],['mileage','Пробег'],['engine','Двигатель'],['power','Мощность'],['gearbox','Коробка передач'],['fuel','Топливо'],['drive','Привод'],['condition','Состояние']];
+const SPEC_ROWS = [['year','Год выпуска'],['location','Местонахождение'],['series','Серия'],['mileage','Пробег'],['engine','Двигатель'],['power','Мощность'],['gearbox','Коробка передач'],['fuel','Топливо'],['drive','Привод'],['condition','Состояние']];
 
 let cars = [];
 
@@ -51,10 +60,53 @@ function parseCars(text){
   });
 }
 
+/* ---------- per-car data file: <folder>/<folder>-00-Card.txt ---------- */
+const isEmpty = v => !v || /^(n\/a|-|—|none)$/i.test(v.trim());
+
+function parseCard(text){
+  const lines = {}; let key = null;
+  for (const raw of text.replace(/^\uFEFF/, '').split(/\r?\n/)) {
+    const m = raw.match(/^([a-z][A-Za-z0-9]*):\s?(.*)$/);
+    if (m) { key = m[1]; lines[key] = [m[2]]; }
+    else if (key) lines[key].push(raw);
+  }
+  const out = {};
+  for (const [k, arr] of Object.entries(lines)) {
+    // blank line = new paragraph; other line breaks are joined with a space
+    const v = arr.join('\n').split(/\n\s*\n/).map(p => p.replace(/\s*\n\s*/g, ' ').trim()).filter(Boolean).join('\n\n');
+    if (!isEmpty(v)) out[k] = v;
+  }
+  return out;
+}
+
+async function loadCard(car){
+  try {
+    const url = encodeURI(`assets/${car.folder}/${car.folder}-00-Card.txt`);
+    const res = await fetch(url, {cache:'no-cache'});
+    if (!res.ok) return;
+    const text = await res.text();
+    if (/^\s*</.test(text)) return;          // host returned an HTML page instead of the file
+    const c = parseCard(text);
+    if (c.title)        car.name = c.title;
+    if (c.imageAlt)     car.alt = c.imageAlt;
+    if (c.year)         car.year = c.year;
+    if (c.series)       car.series = c.series;
+    if (c.mileage)      car.mileage = c.mileage;
+    if (c.displacement) car.engine = c.displacement;
+    if (c.power)        car.power = c.power;
+    if (c.transmission) car.gearbox = c.transmission;
+    if (c.price)        car.price = c.price;
+    if (c.description)  car.story = c.description;
+    if (c.history)      car.history = c.history;
+    if (c.category)     car.category = c.category.toLowerCase();
+  } catch (err) { console.warn('Card file not loaded for', car.folder, err); }
+}
+
 async function loadCars(){
   const res = await fetch(CARS_FILE, {cache:'no-cache'});
   if (!res.ok) throw new Error(`${CARS_FILE}: HTTP ${res.status}`);
   cars = parseCars(await res.text());
+  await Promise.all(cars.map(loadCard));
 }
 
 /* ---------- image helpers ---------- */
@@ -103,12 +155,17 @@ const grid = document.getElementById('car-grid');
 const HOME_SECTIONS = ['.hero', '.intro-strip', '.collection', '.manifesto', '.contact-band', '.method'];
 const activeFilter = () => document.querySelector('.filter.active')?.dataset.filter || 'all';
 
+function cardMeta(car){
+  const parts = [car.mileage, car.power, car.gearbox && car.gearbox.split(',')[0]].filter(Boolean);
+  return parts.length ? `<div class="car-meta">${parts.map(p => `<span>${esc(p)}</span>`).join('')}</div>` : '';
+}
+
 function cardMarkup(car){
   const tag = CATEGORY_LABEL[car.category];
-  return `<article class="car-card" data-category="${esc(car.category)}" data-id="${esc(car.id)}" tabindex="0" role="link" aria-label="Открыть ${esc(car.name)}">
-  <div class="car-image-wrap"><img class="car-image" src="${photoUrl(car,1,600)}" srcset="${photoSrcset(car,1,1200)}" sizes="${SIZES_CARD}" alt="${esc(car.name)}" loading="lazy" decoding="async">${tag ? `<span class="car-tag">${tag}</span>` : ''}</div>
+  return `<article class="car-card" data-category="${esc(car.category)}" data-id="${esc(car.id)}" tabindex="0" role="link" aria-label="Открыть ${esc(car.alt || car.name)}">
+  <div class="car-image-wrap"><img class="car-image" src="${photoUrl(car,1,600)}" srcset="${photoSrcset(car,1,1200)}" sizes="${SIZES_CARD}" alt="${esc(car.alt || car.name)}" loading="lazy" decoding="async">${tag ? `<span class="car-tag">${tag}</span>` : ''}</div>
   <div class="car-card-top"><span class="car-year">${esc(car.year)} · ${esc(car.location.toUpperCase())}</span>${car.price ? `<span class="car-price">${esc(car.price)}</span>` : ''}</div>
-  <h3>${esc(car.name)}</h3>
+  <h3>${esc(car.name.replace(/:\s*/, ': '))}</h3>${cardMeta(car)}
   <span class="card-arrow">СМОТРЕТЬ АВТОМОБИЛЬ <span>↗</span></span></article>`;
 }
 
@@ -128,19 +185,24 @@ function thumbsMarkup(car){
 }
 
 function titleMarkup(name){
+  // "Headline: 1962 Car name" → second part in italics; otherwise the first word stays plain
+  const c = name.indexOf(':');
+  if (c > 0) return `${esc(name.slice(0, c))}: <em>${esc(name.slice(c + 1).trim())}</em>`;
   const i = name.indexOf(' ');
   return i < 0 ? `<em>${esc(name)}</em>` : `${esc(name.slice(0, i))} <em>${esc(name.slice(i + 1))}</em>`;
 }
+
+const paragraphs = t => String(t).split(/\n\n/).map(p => `<p>${esc(p)}</p>`).join('');
 
 function detailMarkup(car){
   const rows = SPEC_ROWS.filter(([k]) => car[k]).map(([k, label]) => `<div class="spec-row"><dt>${label}</dt><dd>${esc(car[k])}</dd></div>`).join('');
   return `<section class="detail-shell" data-car="${esc(car.id)}">
   <a class="back-link" href="#/"><span>←</span> НАЗАД К НАХОДКАМ</a>
   <div class="detail-title-row"><div><p class="eyebrow">TROVATA IN ITALIA · ${esc(car.year)}</p><h1>${titleMarkup(car.name)}</h1></div><div class="detail-price">${esc(car.price || 'Цена по запросу')}</div></div>
-  <div class="detail-layout"><div><div class="gallery-main"><img id="gallery-main-image" src="${photoUrl(car,1,1200)}" srcset="${photoSrcset(car,1)}" sizes="${SIZES_MAIN}" alt="${esc(car.name)} — фотография"></div><div class="gallery-thumbs-slot"></div></div>
+  <div class="detail-layout"><div><div class="gallery-main"><img id="gallery-main-image" src="${photoUrl(car,1,1200)}" srcset="${photoSrcset(car,1)}" sizes="${SIZES_MAIN}" alt="${esc(car.alt || car.name)} — фотография"></div><div class="gallery-thumbs-slot"></div></div>
   <aside class="spec-card"><p class="eyebrow">SCHEDA TECNICA</p><h2>Характеристики</h2><dl class="spec-list">${rows}</dl>
-  <p class="spec-note">Финальные условия, документы, осмотр и логистика обсуждаются индивидуально.</p><a class="button button-dark" href="mailto:ciao@italianfinds.example?subject=${encodeURIComponent('Запрос: '+car.name)}">Запросить информацию <span>↗</span></a></aside></div>
-  <div class="detail-story"><p class="eyebrow">LA STORIA</p><h2>У этой находки есть характер.</h2><p>${esc(car.story || 'Подробное описание, история владения, документы и результаты осмотра — по запросу.')}</p></div>
+  <p class="spec-note">Финальные условия, документы, осмотр и логистика обсуждаются индивидуально.</p><a class="button button-dark" href="mailto:ciao@italianfinds.example?subject=${encodeURIComponent('Запрос: '+(car.alt || car.name))}">Запросить информацию <span>↗</span></a></aside></div>
+  <div class="detail-story"><p class="eyebrow">LA STORIA</p><h2>У этой находки есть характер.</h2>${paragraphs(car.story || 'Подробное описание, история владения, документы и результаты осмотра — по запросу.')}${car.history ? paragraphs(car.history) : ''}</div>
   </section>`;
 }
 

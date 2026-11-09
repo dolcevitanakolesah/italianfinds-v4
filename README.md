@@ -36,6 +36,32 @@ Optional display names, categories (for the filters) and extra details (price, m
 
 > Because the list is loaded with `fetch`, open the site through a web server (`python3 -m http.server`) — double-clicking `index.html` will not load the list. Cloudflare Pages works as is.
 
+## Car data: `<folder>/<folder>-00-Card.txt`
+Each car folder holds a text file with that car's data, named like the folder plus `-00-Card.txt`:
+
+```
+title: С солнцем Сицилии:1962 Bianchina Cabrio
+imageAlt: Bianchina Cabrio
+series: n/a
+year: 1962
+mileage: 64,000 km
+displacement: 499 cc
+power: 18 HP
+transmission: 4-speed manual
+price: 19,000 €
+
+description:
+Text of the listing. May run over several lines;
+a blank line starts a new paragraph.
+
+history: Text of the car's history.
+```
+
+- A key is a lowercase word followed by a colon at the start of a line. `n/a`, `-` or an empty value means "not shown".
+- `title` is the heading (the part after the first `:` is shown in italics on the car page), `imageAlt` is the photo alt text, `displacement` → "Двигатель", `transmission` → "Коробка передач". `description` and `history` are the text blocks on the car page.
+- Optional extra keys: `category` (`coupe`, `spider` or `saloon`, used by the home page filters), `fuel`, `drive`, `condition`.
+- If the file is missing, the car still appears (name from `cars.txt`, no specs).
+
 ## Other content
 - Hero image: `assets/hero-barn.webp` (set in `styles.css`). Manifesto image: URL in `styles.css`.
 - Contact email: replace `ciao@italianfinds.example` in `index.html` and `app.js`.
