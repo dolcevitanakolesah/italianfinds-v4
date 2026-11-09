@@ -135,18 +135,43 @@ document.addEventListener('error', e => {
   img.src = PLACEHOLDER;
 }, true);
 
-// Finds how many numbered photos a car has (and which have a 1920 version)
+// Finds how many numbered photos a car has. Probes the small 300px files in
+// parallel batches (fast), stopping at the first batch that contains a gap.
+// 1920px versions are checked lazily, only for the photo actually displayed.
 const imageExists = url => new Promise(r => { const i = new Image(); i.onload = () => r(true); i.onerror = () => r(false); i.src = url; });
 async function discoverPhotos(car){
   if (car.probed) return;
-  let n = 1; const hd = [];
-  while (n <= 60) {
-    const [ok, hdOk] = await Promise.all([imageExists(photoUrl(car, n, 300)), imageExists(photoUrl(car, n, 1920))]);
-    if (!ok) break;
-    if (hdOk) hd.push(n);
-    n++;
+  const BATCH = 8, MAX = 80;
+  let count = 0, done = false;
+  for (let start = 1; start <= MAX && !done; start += BATCH) {
+    const nums = Array.from({length: BATCH}, (_, i) => start + i);
+    const res = await Promise.all(nums.map(n => imageExists(photoUrl(car, n, 300))));
+    for (const ok of res) { if (!ok) { done = true; break; } count++; }
   }
-  car.photos = n - 1; car.hd = hd; car.probed = true;
+  car.photos = count; car.probed = true;
+}
+/* How many physical pixels wide the main photo is on this screen. */
+const neededWidth = () => {
+  const el = document.getElementById('gallery-main-image');
+  return (el ? el.clientWidth : 0) * (window.devicePixelRatio || 1);
+};
+/* The 1920px file is a bonus: it is only looked for when this screen could
+   show more detail than the 1200px one (large / retina display). Otherwise
+   it is never requested. Photos without a 1920 version simply stay at 1200. */
+const hdChecked = new Set();
+async function ensureHd(car, n){
+  if (neededWidth() <= 1200) return false;
+  const key = car.id + ':' + n;
+  if (!hdChecked.has(key)) {
+    hdChecked.add(key);
+    if (await imageExists(photoUrl(car, n, 1920)) && !car.hd.includes(n)) car.hd.push(n);
+  }
+  return car.hd.includes(n);
+}
+// Smallest file that is sharp enough for this screen (used for preloading)
+function widthForScreen(car, n){
+  const need = neededWidth();
+  return [300, 600, 1200].find(w => w >= need) || (car.hd.includes(n) ? 1920 : 1200);
 }
 
 /* ---------- rendering ---------- */
@@ -179,9 +204,9 @@ function thumbsMarkup(car){
   if (photoCount(car) < 2) return '';
   let html = '';
   for (let n = 1; n <= photoCount(car); n++) {
-    html += `<button class="gallery-thumb ${n===1?'active':''}" data-n="${n}" aria-label="Фото ${n}"><img src="${photoUrl(car,n,300)}" srcset="${photoSrcset(car,n,600)}" sizes="${SIZES_THUMB}" alt="" loading="lazy" decoding="async"></button>`;
+    html += `<button class="gallery-thumb ${n===1?'active':''}" data-n="${n}" aria-label="Фото ${n}"><img src="${photoUrl(car,n,300)}" srcset="${photoSrcset(car,n,600)}" sizes="${SIZES_THUMB}" alt="" loading="lazy" decoding="async" draggable="false"></button>`;
   }
-  return `<div class="gallery-thumbs">${html}</div>`;
+  return `<div class="gallery-thumbs" role="list" aria-label="Все фотографии">${html}</div>`;
 }
 
 function titleMarkup(name){
@@ -199,7 +224,7 @@ function detailMarkup(car){
   return `<section class="detail-shell" data-car="${esc(car.id)}">
   <a class="back-link" href="#/"><span>←</span> НАЗАД К НАХОДКАМ</a>
   <div class="detail-title-row"><div><p class="eyebrow">TROVATA IN ITALIA · ${esc(car.year)}</p><h1>${titleMarkup(car.name)}</h1></div><div class="detail-price">${esc(car.price || 'Цена по запросу')}</div></div>
-  <div class="detail-layout"><div><div class="gallery-main"><img id="gallery-main-image" src="${photoUrl(car,1,1200)}" srcset="${photoSrcset(car,1)}" sizes="${SIZES_MAIN}" alt="${esc(car.alt || car.name)} — фотография"></div><div class="gallery-thumbs-slot"></div></div>
+  <div class="detail-layout"><div><div class="gallery-main"><img id="gallery-main-image" draggable="false" src="${photoUrl(car,1,1200)}" srcset="${photoSrcset(car,1)}" sizes="${SIZES_MAIN}" alt="${esc(car.alt || car.name)} — фотография"><button class="gallery-nav prev" aria-label="Предыдущее фото" hidden>‹</button><button class="gallery-nav next" aria-label="Следующее фото" hidden>›</button><span class="gallery-count" hidden></span></div><div class="gallery-thumbs-slot"></div></div>
   <aside class="spec-card"><p class="eyebrow">SCHEDA TECNICA</p><h2>Характеристики</h2><dl class="spec-list">${rows}</dl>
   <p class="spec-note">Финальные условия, документы, осмотр и логистика обсуждаются индивидуально.</p><a class="button button-dark" href="mailto:ciao@italianfinds.example?subject=${encodeURIComponent('Запрос: '+(car.alt || car.name))}">Запросить информацию <span>↗</span></a></aside></div>
   <div class="detail-story"><p class="eyebrow">LA STORIA</p><h2>У этой находки есть характер.</h2>${paragraphs(car.story || 'Подробное описание, история владения, документы и результаты осмотра — по запросу.')}${car.history ? paragraphs(car.history) : ''}</div>
@@ -225,16 +250,53 @@ async function renderRoute(){
   const shell = document.querySelector('.detail-shell');
   if (!shell || shell.dataset.car !== car.id) return;   // user navigated away meanwhile
   shell.querySelector('.gallery-thumbs-slot').innerHTML = thumbsMarkup(car);
-  document.getElementById('gallery-main-image').srcset = photoSrcset(car, 1);
+  shell.querySelectorAll('.gallery-nav, .gallery-count').forEach(el => el.hidden = photoCount(car) < 2);
+  showPhoto(car, 1);
 }
 
-function showPhoto(car, n){
+let currentPhoto = 1;
+function currentCar(){
+  const id = document.querySelector('.detail-shell')?.dataset.car;
+  return cars.find(c => c.id === id);
+}
+
+async function showPhoto(car, n){
+  const total = photoCount(car);
+  n = ((n - 1 + total) % total) + 1;          // wrap around
+  currentPhoto = n;
   const main = document.getElementById('gallery-main-image');
   delete main.dataset.fallback;               // allow the placeholder logic to run again
-  main.srcset = photoSrcset(car, n);
   main.sizes = SIZES_MAIN;
+  main.srcset = photoSrcset(car, n);          // 300/600/1200 (+1920 if already known)
   main.src = photoUrl(car, n, 1200);
+  const count = document.querySelector('.gallery-count');
+  if (count) count.textContent = `${n} / ${total}`;
+  // highlight the thumbnail and bring it into view inside the strip (without scrolling the page)
+  const strip = document.querySelector('.gallery-thumbs');
+  if (strip) {
+    strip.querySelectorAll('.gallery-thumb').forEach(b => b.classList.toggle('active', Number(b.dataset.n) === n));
+    const t = strip.querySelector(`.gallery-thumb[data-n="${n}"]`);
+    if (t) strip.scrollTo({left: t.offsetLeft - (strip.clientWidth - t.offsetWidth) / 2, behavior: 'smooth'});
+  }
+  // preload the neighbours at the size this screen actually needs
+  [n + 1, n - 1].forEach(m => { if (m >= 1 && m <= total) new Image().src = photoUrl(car, m, widthForScreen(car, m)); });
+  // 1920px only on screens that can benefit, and only if that file exists
+  if (await ensureHd(car, n) && currentPhoto === n && main.dataset.fallback !== '1') main.srcset = photoSrcset(car, n);
 }
+const stepPhoto = d => { const car = currentCar(); if (car && photoCount(car) > 1) showPhoto(car, currentPhoto + d); };
+
+// swipe on the main photo
+let swipeX = null, swipeY = null;
+document.addEventListener('touchstart', e => {
+  if (!e.target.closest('.gallery-main')) return;
+  swipeX = e.touches[0].clientX; swipeY = e.touches[0].clientY;
+}, {passive: true});
+document.addEventListener('touchend', e => {
+  if (swipeX === null) return;
+  const dx = e.changedTouches[0].clientX - swipeX, dy = e.changedTouches[0].clientY - swipeY;
+  swipeX = swipeY = null;
+  if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy) * 1.5) stepPhoto(dx < 0 ? 1 : -1);
+}, {passive: true});
 
 document.addEventListener('click', e => {
   const card = e.target.closest('.car-card');
@@ -247,14 +309,12 @@ document.addEventListener('click', e => {
     return;
   }
   const thumb = e.target.closest('.gallery-thumb');
-  if (thumb) {
-    const car = cars.find(c => c.id === thumb.closest('.detail-shell').dataset.car);
-    showPhoto(car, Number(thumb.dataset.n));
-    document.querySelectorAll('.gallery-thumb').forEach(b => b.classList.remove('active'));
-    thumb.classList.add('active');
-  }
+  if (thumb) { showPhoto(currentCar(), Number(thumb.dataset.n)); return; }
+  const nav = e.target.closest('.gallery-nav');
+  if (nav) stepPhoto(nav.classList.contains('next') ? 1 : -1);
 });
 document.addEventListener('keydown', e => {
+  if ((e.key === 'ArrowRight' || e.key === 'ArrowLeft') && document.querySelector('.detail-shell')) { stepPhoto(e.key === 'ArrowRight' ? 1 : -1); return; }
   if ((e.key === 'Enter' || e.key === ' ') && e.target.matches('.car-card')) { e.preventDefault(); location.hash = `#/car/${e.target.dataset.id}`; }
 });
 window.addEventListener('hashchange', renderRoute);

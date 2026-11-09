@@ -83,6 +83,7 @@ assets/Bianchina-1962-Rimini/Bianchina-1962-Rimini-02-0300.webp
 - The last number is the width in pixels, always four digits: `0300`, `0600`, `1200` are required for every photo; `1920` is optional and may exist for only some photos.
 - Folder and file names are **case-sensitive** on Cloudflare Pages.
 - No need to declare how many photos there are: the site tries `01`, `02`, `03`… and stops at the first missing one, so number photos without gaps. A missing photo shows a "Foto in arrivo" placeholder.
+- On the car page the photos appear as one horizontally scrolling thumbnail strip under the main photo (swipe, arrows, ← → keys). 1920 versions are loaded only for the photo being viewed.
 
 ## Important
 All cars, prices, mileage, specifications, and image assignments are illustrative placeholders. The remote photos are generic visual placeholders and may not depict the named model. Replace them with verified photographs and accurate vehicle details before publishing real offers.
