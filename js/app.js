@@ -20,7 +20,7 @@ for(let i=0;i<172;i+=18)o+=`<line x1="-300" y1="${i}" x2="700" y2="${i}" stroke=
 o+=`<rect x="28" y="34" width="14" height="30" fill="#008c45"/><rect x="42" y="34" width="14" height="30" fill="#fff"/><rect x="56" y="34" width="14" height="30" fill="#cd212a"/><rect x="300" y="40" width="70" height="60" fill="#a9c4d0" stroke="#8b7e66" stroke-width="4"/><rect x="-300" y="172" width="1000" height="300" fill="#8e8777"/>`;
 }
 return o}
-function img(c,i){
+function art(c,i){
 const g=++n,sc=["tuscan","barn","garage"],alt=sc[(sc.indexOf(c.s)+1)%3];
 const v=[[c.s,"0 0 400 300"],[alt,"0 0 400 300"],[c.s,"236 84 150 112"],[alt,"20 100 150 112"]][i];
 return `<svg viewBox="${v[1]}" preserveAspectRatio="xMidYMid slice" role="img" aria-label="${c.n}">${scene(v[0],g)}${car(c.c,g)}</svg>`}
@@ -32,15 +32,25 @@ return `<defs><path id="b${g}" d="M38 160V140Q40 128 66 124L128 118Q150 92 192 8
 <line x1="44" y1="140" x2="362" y2="140" stroke="#fff" stroke-opacity=".5" stroke-width="2"/>
 <rect x="38" y="132" width="6" height="10" fill="#cc2b2b"/><circle cx="355" cy="136" r="7" fill="#f7e9b0"/>
 ${[100,306].map(x=>`<circle cx="${x}" cy="170" r="30" fill="#17120e"/><circle cx="${x}" cy="170" r="26" fill="#111"/><circle cx="${x}" cy="170" r="15" fill="#d5d5d5"/><circle cx="${x}" cy="170" r="5" fill="#777"/>`).join("")}`}
+/* Real photos: assets/<Folder>/<Folder>-NN-WWWW.webp (WWWW = 0300, 0600, 1200, optionally 1920) */
+function photo(c,i,ctx){
+const f=c.folder,nn=String(i+1).padStart(2,"0"),p=w=>`assets/${f}/${f}-${nn}-${String(w).padStart(4,"0")}.webp`;
+const hi=(c.hi||[]).includes(i+1);
+const ws={thumb:[300,600],card:[300,600,1200],main:[600,1200].concat(hi?[1920]:[])}[ctx];
+const sizes={thumb:"(max-width:820px) 25vw, 15vw",card:"(max-width:700px) 100vw, 360px",main:"(max-width:820px) 100vw, 62vw"}[ctx];
+const src={thumb:300,card:600,main:1200}[ctx];
+return `<img src="${p(src)}" srcset="${ws.map(w=>p(w)+" "+w+"w").join(", ")}" sizes="${sizes}" alt="${c.n} (${i+1})" loading="${ctx==="main"?"eager":"lazy"}" data-c="${c.id}" data-i="${i}" onerror="fb(this)" style="width:100%;height:100%;object-fit:cover;display:block">`}
+function img(c,i,ctx){return c.folder&&i<c.photos?photo(c,i,ctx||"card"):art(c,i%4)}
+function fb(el){const c=cars.find(x=>x.id===el.dataset.c);el.onerror=null;el.outerHTML=art(c,+el.dataset.i%4)}
 const price=p=>lang==="ru"?p.toLocaleString("ru-RU")+" €":"€"+p.toLocaleString("en-GB");
 const nf=x=>x.toLocaleString(lang==="ru"?"ru-RU":"en-GB");
 const gearTxt=g=>lang==="ru"?g+"-ступенчатая механика":g+"-speed manual";
-const card=c=>`<a class="card" href="#${c.id}"><div class="ph">${img(c,0)}<span class="tag">${t(c.tag)}</span></div><div class="cb"><h3>${c.n}</h3><p>${c.y} · ${c.l[li()]}</p><b>${price(c.p)}</b></div></a>`;
+const card=c=>`<a class="card" href="#${c.id}"><div class="ph">${img(c,0,"card")}<span class="tag">${t(c.tag)}</span></div><div class="cb"><h3>${c.n}</h3><p>${c.y} · ${c.l[li()]}</p><b>${price(c.p)}</b></div></a>`;
 function home(){return `<section class="hero"><div class="txt"><div class="eyebrow">${t("eye")}</div><h1>${t("h")}</h1><p>${t("sub")}</p><a class="btn" href="#collection" onclick="event.preventDefault();document.getElementById('collection').scrollIntoView({behavior:'smooth'})">${t("cta")}</a></div><svg viewBox="10 60 380 150" preserveAspectRatio="xMidYMax meet">${scene("tuscan",0,true)}${car("#b3202a",0)}</svg></section>
 <div class="vals"><div><h3>${t("v1")}</h3><p>${t("v1p")}</p></div><div><h3>${t("v2")}</h3><p>${t("v2p")}</p></div><div><h3>${t("v3")}</h3><p>${t("v3p")}</p></div></div>
 <div class="wrap" id="collection"><div class="sec"><div class="orn">◆ ◆ ◆</div><h2>${t("coll")}</h2><p>${t("collp")}</p></div><div class="grid">${cars.map(card).join("")}</div></div>`}
 function page(c){const r=(k,v)=>`<div><dt>${t(k)}</dt><dd>${v}</dd></div>`,u=t("u");
-return `<div class="wrap"><a class="back" href="#">${t("back")}</a><div class="car"><div><div class="ph big" id="main">${img(c,0)}</div><div class="th">${[0,1,2,3].map(i=>`<button data-i="${i}" class="${i?"":"on"}" aria-label="${i+1}">${img(c,i)}</button>`).join("")}</div><p class="desc">${c.d[li()]}</p></div>
+return `<div class="wrap"><a class="back" href="#">${t("back")}</a><div class="car"><div><div class="ph big" id="main">${img(c,0,"main")}</div><div class="th">${Array.from({length:c.folder?c.photos:4},(_,i)=>i).map(i=>`<button data-i="${i}" class="${i?"":"on"}" aria-label="${i+1}">${img(c,i,"thumb")}</button>`).join("")}</div><p class="desc">${c.d[li()]}</p></div>
 <aside class="spec"><h1>${c.n}</h1><div style="margin:18px 0 4px" class="pl">${t("price")}</div><div class="price">${price(c.p)}</div><dl>${r("year",c.y)}${r("km",nf(c.km)+" "+u.km)}${r("cc",nf(c.cc)+" "+u.cc)}${r("hp",c.hp+" "+u.hp)}${r("gear",gearTxt(c.g))}${r("loc",c.l[li()])}${r("cond",c.st[li()])}</dl><a class="btn g" href="https://t.me/italianfinds">${t("enq")}</a><a class="alt" href="mailto:info@italianfinds.example">${t("mail")}</a></aside></div></div>`}
 function render(){
 const c=cars.find(x=>x.id===location.hash.slice(1));
@@ -48,6 +58,6 @@ document.documentElement.lang=lang;$("#lang").textContent=lang==="ru"?"EN":"RU";
 $("#app").innerHTML=c?page(c):home();document.title=(c?c.n+" – ":"")+"Italian Finds";
 if(c)window.scrollTo(0,0)}
 document.addEventListener("click",e=>{const b=e.target.closest(".th button");if(!b)return;
-$("#main").innerHTML=b.innerHTML;document.querySelectorAll(".th button").forEach(x=>x.classList.toggle("on",x===b))});
+const c=cars.find(x=>x.id===location.hash.slice(1));$("#main").innerHTML=img(c,+b.dataset.i,"main");document.querySelectorAll(".th button").forEach(x=>x.classList.toggle("on",x===b))});
 $("#lang").onclick=()=>{lang=lang==="ru"?"en":"ru";try{localStorage.setItem("lang",lang)}catch(e){}render()};
 window.addEventListener("hashchange",render);render();
