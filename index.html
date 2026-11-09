@@ -1,18 +1,116 @@
-<!DOCTYPE html>
-<html lang="en">
+<!doctype html>
+<html lang="ru">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Italian Finds – Classic Italian cars, found in Italy</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,700;1,500&family=Montserrat:wght@400;500;600&display=swap">
-<link rel="stylesheet" href="css/style.css">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f4f0e7">
+  <meta name="description" content="Italian Finds — классические автомобили, найденные в Италии.">
+  <title>Italian Finds — классика из Италии</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./styles.css">
 </head>
 <body>
-<div class="tri"></div>
-<header><div class="nav"><a class="logo" href="#">Italian <b>Finds</b></a><button class="lang" id="lang"></button></div></header>
-<main id="app"></main>
-<footer><div class="logo">Italian <b style="color:#ff6a73">Finds</b></div><p id="ft1"></p><p>Telegram: @italianfinds · info@italianfinds.example</p><p>© 2026 Italian Finds</p></footer>
-<script src="js/cars.js"></script>
-<script src="js/app.js"></script>
+  <div class="announcement"><span class="dot"></span> НАЙДЕНО В ИТАЛИИ · ДОСТАВКА И СОПРОВОЖДЕНИЕ ПО ЗАПРОСУ</div>
+  <header class="site-header">
+    <a class="brand" href="#/" aria-label="Italian Finds — главная">
+      <span class="brand-mark">IF</span>
+      <span class="brand-name">italian<span> finds</span><small>CLASSIC CARS · ITALIA</small></span>
+    </a>
+    <nav class="main-nav">
+      <a href="#collection">Автомобили</a>
+      <a href="#story">Наша философия</a>
+      <a href="#contact">Контакты</a>
+    </nav>
+    <a class="header-cta" href="mailto:ciao@italianfinds.example">Обсудить автомобиль <span>↗</span></a>
+    <button class="menu-toggle" aria-label="Открыть меню">☰</button>
+  </header>
+
+  <main id="app">
+    <section class="hero">
+      <div class="hero-photo" role="img" aria-label="Классический итальянский спортивный автомобиль"></div>
+      <div class="hero-shade"></div>
+      <div class="hero-copy">
+        <p class="eyebrow light">LA BELLA AUTOMOBILE · DAL 1960</p>
+        <h1>У каждой машины<br>есть <em>своя Италия.</em></h1>
+        <p class="hero-intro">Находим характерные классические автомобили по всей Италии — от забытых гаражей до маленьких семейных коллекций.</p>
+        <a class="button button-light" href="#collection">Смотреть находки <span>↓</span></a>
+      </div>
+      <div class="hero-caption"><span>01 / 06</span><span>EMOZIONE ITALIANA</span><span>45° 26′ N — 12° 20′ E</span></div>
+    </section>
+
+    <section class="intro-strip" id="story">
+      <div class="intro-kicker">PICCOLE SCOPERTE,<br>GRANDI STORIE.</div>
+      <p>Мы ищем не просто старые автомобили. Мы ищем подлинные итальянские истории — с правильными линиями, честной патиной и тем самым ощущением dolce vita.</p>
+      <span class="stamp">SCOPERTI<br>IN ITALIA <b>✳</b></span>
+    </section>
+
+    <section class="collection section-wrap" id="collection">
+      <div class="section-heading">
+        <div><p class="eyebrow">LA SELEZIONE · 2026</p><h2>Свежие <em>находки.</em></h2></div>
+        <p class="section-note">Небольшая подборка автомобилей,<br>которые заслуживают второго шанса.</p>
+      </div>
+      <div class="filters" aria-label="Фильтр автомобилей">
+        <button class="filter active" data-filter="all">Все находки <span>06</span></button>
+        <button class="filter" data-filter="coupe">Купе</button>
+        <button class="filter" data-filter="spider">Spider & Cabrio</button>
+        <button class="filter" data-filter="saloon">Седаны</button>
+      </div>
+      <div class="car-grid" id="car-grid"></div>
+    </section>
+
+    <section class="manifesto">
+      <div class="manifesto-image"></div>
+      <div class="manifesto-copy">
+        <p class="eyebrow light">NON È SOLO UN’AUTO.</p>
+        <h2>Это часть<br><em>итальянской жизни.</em></h2>
+        <p>Каждая находка начинается с любопытства: маленький городок, открытая дверь мастерской, разговор с владельцем. Мы знакомим вас с автомобилями, которые ещё хранят дух своего времени.</p>
+        <a class="text-link light-link" href="mailto:ciao@italianfinds.example">Расскажите, что вы ищете <span>↗</span></a>
+      </div>
+    </section>
+
+    <section class="contact-band" id="contact">
+      <div><p class="eyebrow">CERCHI QUALCOSA DI SPECIALE?</p><h2>Ищете <em>свою</em> Италию?</h2></div>
+      <a class="button button-dark" href="mailto:ciao@italianfinds.example">Написать нам <span>↗</span></a>
+    </section>
+
+    <section class="method" id="metodo" aria-labelledby="method-title">
+      <div class="method-head">
+        <p class="eyebrow">IL METODO</p>
+        <h2 id="method-title">From Italian barn <em>to your garage</em></h2>
+      </div>
+      <ol class="method-steps">
+        <li class="method-step">
+          <span class="step-num" aria-hidden="true">01</span>
+          <h3>Discovery</h3>
+          <p>We search private collections, estates and small-town garages across Italy.</p>
+        </li>
+        <li class="method-step">
+          <span class="step-num" aria-hidden="true">02</span>
+          <h3>Inspection</h3>
+          <p>Independent check, full photo set, chassis and engine numbers, honest condition report.</p>
+        </li>
+        <li class="method-step">
+          <span class="step-num" aria-hidden="true">03</span>
+          <h3>Paperwork</h3>
+          <p>Italian title (libretto, certificato di proprietà), ASI/FIVA documents where available.</p>
+        </li>
+        <li class="method-step">
+          <span class="step-num" aria-hidden="true">04</span>
+          <h3>Delivery</h3>
+          <p>Transport arranged in line with applicable export and sanctions rules.</p>
+        </li>
+      </ol>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <a class="brand footer-brand" href="#/"><span class="brand-mark">IF</span><span class="brand-name">italian<span> finds</span><small>CLASSIC CARS · ITALIA</small></span></a>
+    <p>Автомобили с историей. Найдены в Италии.</p>
+    <span>© 2026 ITALIAN FINDS <i>·</i> FATTO CON PASSIONE</span>
+  </footer>
+
+  <script src="./app.js"></script>
 </body>
 </html>

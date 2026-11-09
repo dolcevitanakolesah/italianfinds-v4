@@ -1,26 +1,60 @@
-# Italian Finds
+# Italian Finds — static website prototype
 
-Static website showcasing classic Italian cars found in Italy, for Russian-speaking buyers. No build step, no dependencies.
-
-## Structure
-- `index.html` – page shell
-- `css/style.css` – styling
-- `js/cars.js` – the car catalogue (edit this to add cars)
-- `js/app.js` – rendering, routing (`#car-id`), RU/EN texts
-- `assets/` – your real photos, one subfolder per car
+A responsive Russian-language classic-car showcase with an Italian editorial visual direction.
 
 ## Run locally
-Open `index.html` in a browser, or run `python3 -m http.server` and visit http://localhost:8000
+Open `index.html` in a browser, or run a local static server:
 
-## Deploy
-**GitHub:** create a repo, upload the contents of this folder, then Settings > Pages > deploy from branch `main` / root (optional test site).
+```bash
+python3 -m http.server 8000
+```
 
-**Cloudflare Pages:** Workers & Pages > Create > Pages > Connect to Git > pick the repo. Framework preset: None. Build command: empty. Output directory: `/`.
+Then visit `http://localhost:8000`.
 
-## Add a car
-1. Create `assets/<Folder>/` (e.g. `assets/Bianchina-Red-Ferrara/`) and put the photos in it as `<Folder>-NN-WWWW.webp`, with WWWW = `0300`, `0600`, `1200` for every photo, plus an optional `1920`. See `assets/README.txt`. File names are case-sensitive.
-2. Copy an entry in `js/cars.js` and set: `id` (unique, lowercase, letters/digits/hyphens), `folder`, `photos` (how many numbered photos), `hi` (numbers of the photos that also have a 1920 version, e.g. `[1,2]`), name `n`, year `y`, mileage `km`, displacement `cc`, power `hp`, gears `g`, price `p` (EUR), region `l` [English, Russian], `tag` (`barn`, `garage`, `orig`), condition `st` and description `d` [English, Russian].
+## Deploy to Cloudflare Pages
+1. Create a GitHub repository and push the contents of this folder to its root.
+2. In Cloudflare, open **Workers & Pages → Create → Pages → Connect to Git**.
+3. Select the repository.
+4. Framework preset: **None**.
+5. Build command: leave empty.
+6. Build output directory: `/` (repository root).
+7. Deploy.
 
-Photo 01 is the cover on the home page. The browser picks 300/600/1200/1920 automatically depending on the screen. If a file is missing, an illustration is shown instead. The sample cars without a `folder` still use illustrations; delete them when you have real cars.
+No build step or server-side runtime is required.
 
-Contact details (Telegram handle, email) are placeholders in `js/app.js` and `index.html`.
+## Replace the demo content
+- Car listings and specifications: `app.js`, in the `cars` array.
+- Car photos: see **Car photos** below (folder `assets/`).
+- Hero and manifesto imagery: image URLs in `styles.css`.
+- Contact email: replace `ciao@italianfinds.example` in `index.html` and `app.js`.
+- Brand colours and typography: CSS variables at the top of `styles.css`.
+
+## Car photos
+Photos live in `assets/`, one subfolder per car. The folder name is also the file prefix:
+
+```
+assets/Bianchina-Red-Ferrara/Bianchina-Red-Ferrara-01-0300.webp
+assets/Bianchina-Red-Ferrara/Bianchina-Red-Ferrara-01-0600.webp
+assets/Bianchina-Red-Ferrara/Bianchina-Red-Ferrara-01-1200.webp
+assets/Bianchina-Red-Ferrara/Bianchina-Red-Ferrara-01-1920.webp   (optional)
+assets/Bianchina-Red-Ferrara/Bianchina-Red-Ferrara-02-0300.webp
+...
+```
+
+- `NN` is the photo number (two digits). Photo `01` is the cover shown on the home page.
+- The last number is the width in pixels, always four digits: `0300`, `0600`, `1200`. Every photo needs these three.
+- `1920` is optional and may exist for only some photos.
+- Folder and file names are **case-sensitive** on Cloudflare Pages.
+
+A static site cannot list a folder, so each car in `app.js` declares its photos:
+
+```js
+{id:"bianchina", folder:"Bianchina-Red-Ferrara", photos:8, hd:[1,2,5], name:"…", …}
+```
+
+`photos` is how many numbered photos exist, and `hd` lists the photo numbers that also have a `-1920` version. The browser picks the best size automatically (`srcset`). If a file is missing, a neutral "Foto in arrivo" placeholder is shown instead of a broken image.
+
+## Important
+All cars, prices, mileage, specifications, and image assignments are illustrative placeholders. The remote photos are generic visual placeholders and may not depict the named model. Replace them with verified photographs and accurate vehicle details before publishing real offers.
+
+The site uses hash-based client-side routes (`#/car/<id>`), so individual vehicle pages work on a static host without rewrite rules.
