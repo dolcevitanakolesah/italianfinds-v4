@@ -1,12 +1,12 @@
 # Car photos
 
-One subfolder per car. Folder name = file prefix:
+One subfolder per car. Folder name = the full line from `cars.txt` = file prefix:
 
-    assets/<Folder>/<Folder>-<NN>-<WIDTH>.webp
+    assets/<Model-Year-Place>/<Model-Year-Place>-<NN>-<WIDTH>.webp
 
-Example: `assets/Bianchina-Red-Ferrara/Bianchina-Red-Ferrara-01-0600.webp`
+Example: `assets/Bianchina-1962-Rimini/Bianchina-1962-Rimini-01-0600.webp`
 
-- NN: photo number, two digits (01 = cover)
+- NN: photo number, two digits (01 = cover), no gaps
 - WIDTH: 0300, 0600, 1200 (required) and 1920 (optional)
 - Names are case-sensitive.
-- Register each car's `folder`, `photos` and `hd` in `app.js`.
+- `hero-barn.webp` is the home page hero image.

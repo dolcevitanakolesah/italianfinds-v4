@@ -20,3 +20,6 @@
 .method-step p{font-size:13px;line-height:1.8;color:#686960;margin:0;max-width:260px}
 @media(max-width:900px){.method{padding:70px 5% 80px}.method-steps{grid-template-columns:repeat(2,1fr);gap:40px 28px}}
 @media(max-width:650px){.method{padding:58px 7% 66px}.method-head{margin-bottom:34px}.method-steps{grid-template-columns:1fr;gap:30px}.method-step{display:grid;grid-template-columns:58px 1fr;column-gap:14px;padding-top:18px}.step-num{grid-row:1 / span 2;font-size:34px;margin:0}.method-step p{max-width:none}}
+
+/* cars.txt could not be loaded */
+.load-error{grid-column:1/-1;font:14px/1.7 var(--serif);color:var(--muted);margin:0}.load-error code{font-family:monospace;font-size:12px}

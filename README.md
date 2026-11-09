@@ -22,37 +22,41 @@ Then visit `http://localhost:8000`.
 
 No build step or server-side runtime is required.
 
-## Replace the demo content
-- Car listings and specifications: `app.js`, in the `cars` array.
-- Car photos: see **Car photos** below (folder `assets/`).
-- Hero and manifesto imagery: image URLs in `styles.css`.
+## The car list: `cars.txt`
+The cars on the site, and their order, come from `cars.txt` in the root (next to `index.html`). One car per line:
+
+```
+Model-Year-Place
+Bianchina-1962-Rimini
+```
+
+Empty lines and lines starting with `#` are ignored. To add, remove or reorder cars, just edit this file.
+
+Optional display names, categories (for the filters) and extra details (price, mileage, engine…) can be added per model in the `CAR_INFO` object at the top of `app.js`. Without an entry the model name is prettified automatically ("FulviaHF" → "Fulvia HF").
+
+> Because the list is loaded with `fetch`, open the site through a web server (`python3 -m http.server`) — double-clicking `index.html` will not load the list. Cloudflare Pages works as is.
+
+## Other content
+- Hero image: `assets/hero-barn.webp` (set in `styles.css`). Manifesto image: URL in `styles.css`.
 - Contact email: replace `ciao@italianfinds.example` in `index.html` and `app.js`.
 - Brand colours and typography: CSS variables at the top of `styles.css`.
 
 ## Car photos
-Photos live in `assets/`, one subfolder per car. The folder name is also the file prefix:
+Photos live in `assets/`, one subfolder per car. The folder name is the **whole line from `cars.txt`** and is also the file prefix:
 
 ```
-assets/Bianchina-Red-Ferrara/Bianchina-Red-Ferrara-01-0300.webp
-assets/Bianchina-Red-Ferrara/Bianchina-Red-Ferrara-01-0600.webp
-assets/Bianchina-Red-Ferrara/Bianchina-Red-Ferrara-01-1200.webp
-assets/Bianchina-Red-Ferrara/Bianchina-Red-Ferrara-01-1920.webp   (optional)
-assets/Bianchina-Red-Ferrara/Bianchina-Red-Ferrara-02-0300.webp
+assets/Bianchina-1962-Rimini/Bianchina-1962-Rimini-01-0300.webp
+assets/Bianchina-1962-Rimini/Bianchina-1962-Rimini-01-0600.webp
+assets/Bianchina-1962-Rimini/Bianchina-1962-Rimini-01-1200.webp
+assets/Bianchina-1962-Rimini/Bianchina-1962-Rimini-01-1920.webp   (optional)
+assets/Bianchina-1962-Rimini/Bianchina-1962-Rimini-02-0300.webp
 ...
 ```
 
 - `NN` is the photo number (two digits). Photo `01` is the cover shown on the home page.
-- The last number is the width in pixels, always four digits: `0300`, `0600`, `1200`. Every photo needs these three.
-- `1920` is optional and may exist for only some photos.
+- The last number is the width in pixels, always four digits: `0300`, `0600`, `1200` are required for every photo; `1920` is optional and may exist for only some photos.
 - Folder and file names are **case-sensitive** on Cloudflare Pages.
-
-A static site cannot list a folder, so each car in `app.js` declares its photos:
-
-```js
-{id:"bianchina", folder:"Bianchina-Red-Ferrara", photos:8, hd:[1,2,5], name:"…", …}
-```
-
-`photos` is how many numbered photos exist, and `hd` lists the photo numbers that also have a `-1920` version. The browser picks the best size automatically (`srcset`). If a file is missing, a neutral "Foto in arrivo" placeholder is shown instead of a broken image.
+- No need to declare how many photos there are: the site tries `01`, `02`, `03`… and stops at the first missing one, so number photos without gaps. A missing photo shows a "Foto in arrivo" placeholder.
 
 ## Important
 All cars, prices, mileage, specifications, and image assignments are illustrative placeholders. The remote photos are generic visual placeholders and may not depict the named model. Replace them with verified photographs and accurate vehicle details before publishing real offers.

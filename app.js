@@ -1,34 +1,69 @@
 /* ------------------------------------------------------------------
-   PHOTO LIBRARY
-   Each car has a folder in /assets named exactly like car.folder:
+   CAR LIST  →  cars.txt  (next to index.html)
+   One car per line, in the order they appear on the site:
 
-     assets/<folder>/<folder>-<NN>-<WIDTH>.webp
+     Model-Year-Place        e.g.  Bianchina-1962-Rimini
 
-   NN    = photo number, two digits (01, 02, ...)
-   WIDTH = horizontal resolution, four digits: 0300, 0600, 1200
-           and, for some photos only, 1920.
+   The whole line is also the photo folder name (case-sensitive!):
 
-   Per car:
-     folder : folder name AND file prefix (case-sensitive on the server!)
-     photos : how many numbered photos exist (01 is the cover)
-     hd     : photo numbers that ALSO have a -1920 version, e.g. [1, 2]
+     assets/<line>/<line>-<NN>-<WIDTH>.webp
+     assets/Bianchina-1962-Rimini/Bianchina-1962-Rimini-01-0600.webp
+
+   NN    = photo number, two digits (01 = cover)
+   WIDTH = 0300, 0600, 1200 (required) and 1920 (optional, per photo)
+
+   The site finds the photos by itself: it tries 01, 02, 03 ... until a
+   file is missing. Empty lines and lines starting with # are ignored.
    ------------------------------------------------------------------ */
-const cars = [
- {id:"giulia-gt",folder:"Giulia-GT-Junior-Blue-Bologna",photos:4,hd:[1],name:"Alfa Romeo Giulia GT 1300 Junior",short:"GT 1300 Junior",year:"1972",category:"coupe",tag:"SCOPERTA RECENTE",price:"€ 28.500",mileage:"78.000 km",power:"89 CV",engine:"1.290 cm³",gearbox:"Механика, 5 ступеней",fuel:"Бензин",drive:"Задний привод",location:"Эмилия-Романья",condition:"На ходу · требует внимания",story:"Небольшое купе с пропорциями, которые не нуждаются в объяснениях. Автомобиль представлен как пример карточки Italian Finds: фотографии и характеристики здесь демонстрационные, а не описание реального лота."},
- {id:"giulietta-spider",folder:"Giulietta-Spider-Red-Siena",photos:4,hd:[1],name:"Alfa Romeo Giulietta Spider",short:"Giulietta Spider",year:"1961",category:"spider",tag:"ICONA ITALIANA",price:"€ 64.000",mileage:"52.400 km",power:"80 CV",engine:"1.290 cm³",gearbox:"Механика, 4 ступени",fuel:"Бензин",drive:"Задний привод",location:"Тоскана",condition:"Проект реставрации",story:"Открытый автомобиль для длинных дорог вдоль побережья. Эта демонстрационная карточка показывает, как можно рассказать историю машины и вынести ключевые параметры в отдельный блок."},
- {id:"fiat-124",folder:"124-Sport-Spider-Yellow-Genova",photos:4,hd:[1],name:"Fiat 124 Sport Spider",short:"124 Sport Spider",year:"1974",category:"spider",tag:"DOLCE VITA",price:"€ 22.900",mileage:"91.000 km",power:"90 CV",engine:"1.756 cm³",gearbox:"Механика, 5 ступеней",fuel:"Бензин",drive:"Задний привод",location:"Лигурия",condition:"Хорошая база для поездок",story:"Лёгкий итальянский спайдер, созданный для удовольствия от дороги. В реальной публикации здесь появятся проверенная история, список выполненных работ и подробности осмотра."},
- {id:"lancia-fulvia",folder:"Fulvia-Coupe-Green-Torino",photos:4,hd:[1],name:"Lancia Fulvia Coupé 1.3 S",short:"Fulvia Coupé 1.3 S",year:"1973",category:"coupe",tag:"SPORTIVA",price:"€ 19.800",mileage:"68.000 km",power:"90 CV",engine:"1.298 cm³",gearbox:"Механика, 5 ступеней",fuel:"Бензин",drive:"Передний привод",location:"Пьемонт",condition:"Сохранившийся оригинал",story:"Fulvia — одна из самых самобытных моделей своего времени. Демонстрационный пример показывает подачу компактного купе с акцентом на происхождение и технические детали."},
- {id:"fiat-500",folder:"Fiat-500L-Cream-Verona",photos:4,hd:[1],name:"Fiat 500 L",short:"500 L",year:"1971",category:"saloon",tag:"PICCOLA GRANDE",price:"€ 8.900",mileage:"44.000 km",power:"18 CV",engine:"499 cm³",gearbox:"Механика, 4 ступени",fuel:"Бензин",drive:"Задний привод",location:"Венето",condition:"На ходу · ухоженный",story:"Маленькая машина с огромным характером. Здесь можно разместить историю владения, сведения о документах и короткий список того, что стоит проверить перед покупкой."},
- {id:"alfetta",folder:"Alfetta-Silver-Milano",photos:4,hd:[1],name:"Alfa Romeo Alfetta 1.8",short:"Alfetta 1.8",year:"1978",category:"saloon",tag:"BERLINA CLASSICA",price:"€ 14.500",mileage:"83.500 km",power:"122 CV",engine:"1.779 cm³",gearbox:"Механика, 5 ступеней",fuel:"Бензин",drive:"Задний привод",location:"Ломбардия",condition:"Хорошее состояние",story:"Элегантный седан для тех, кто ценит инженерную школу Alfa Romeo. В карточке реального автомобиля будут указаны VIN, документы, история обслуживания и результаты осмотра."}
-];
+const CARS_FILE = 'cars.txt';
+
+/* OPTIONAL extra info, keyed by the Model part of the line.
+   Without an entry the model name is just prettified ("FulviaHF" → "Fulvia HF").
+   Any of these keys may be added: name, category (coupe | spider | saloon),
+   price, mileage, engine, power, gearbox, fuel, drive, condition, story. */
+const CAR_INFO = {
+  "GTScalino":  {name:"Alfa Romeo Giulia GT Scalino", category:"coupe"},
+  "Testarossa": {name:"Ferrari Testarossa",           category:"coupe"},
+  "850Spider":  {name:"Fiat 850 Spider",              category:"spider"},
+  "500L":       {name:"Fiat 500 L",                   category:"saloon"},
+  "Bianchina":  {name:"Autobianchi Bianchina Cabriolet", category:"spider"},
+  "FulviaHF":   {name:"Lancia Fulvia HF",             category:"coupe"}
+};
+const CATEGORY_LABEL = {coupe:'COUPÉ', spider:'SPIDER', saloon:'BERLINA'};
+const SPEC_ROWS = [['year','Год выпуска'],['location','Местонахождение'],['mileage','Пробег'],['engine','Двигатель'],['power','Мощность'],['gearbox','Коробка передач'],['fuel','Топливо'],['drive','Привод'],['condition','Состояние']];
+
+let cars = [];
+
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+function parseCars(text){
+  return text.replace(/^\uFEFF/, '').split(/\r?\n/).map(l => l.trim()).filter(l => l && !l.startsWith('#')).map(line => {
+    const [model, year = '', ...rest] = line.split('-');
+    const info = CAR_INFO[model] || {};
+    const place = rest.join(' ').replace(/_/g, ' ');
+    return {
+      id: line.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''),
+      folder: line, model, year, location: place,
+      name: info.name || model.replace(/([a-z])([A-Z0-9])/g, '$1 $2'),
+      category: info.category || '', photos: 0, hd: [], probed: false,
+      ...info
+    };
+  });
+}
+
+async function loadCars(){
+  const res = await fetch(CARS_FILE, {cache:'no-cache'});
+  if (!res.ok) throw new Error(`${CARS_FILE}: HTTP ${res.status}`);
+  cars = parseCars(await res.text());
+}
 
 /* ---------- image helpers ---------- */
 const pad = (n, len) => String(n).padStart(len, '0');
 const photoCount = car => car.photos || 1;
 const photoUrl = (car, n, w) => encodeURI(`assets/${car.folder}/${car.folder}-${pad(n, 2)}-${pad(w, 4)}.webp`);
-// 300 / 600 / 1200 always; 1920 only for photos listed in car.hd
+// 300 / 600 / 1200 always; 1920 only for photos found in car.hd
 const photoWidths = (car, n, max = 1920) =>
-  [300, 600, 1200, ...((car.hd || []).includes(n) ? [1920] : [])].filter(w => w <= max);
+  [300, 600, 1200, ...(car.hd.includes(n) ? [1920] : [])].filter(w => w <= max);
 const photoSrcset = (car, n, max) => photoWidths(car, n, max).map(w => `${photoUrl(car, n, w)} ${w}w`).join(', ');
 
 const SIZES_CARD  = '(max-width:650px) 88vw, (max-width:900px) 45vw, 28vw';
@@ -48,18 +83,40 @@ document.addEventListener('error', e => {
   img.src = PLACEHOLDER;
 }, true);
 
+// Finds how many numbered photos a car has (and which have a 1920 version)
+const imageExists = url => new Promise(r => { const i = new Image(); i.onload = () => r(true); i.onerror = () => r(false); i.src = url; });
+async function discoverPhotos(car){
+  if (car.probed) return;
+  let n = 1; const hd = [];
+  while (n <= 60) {
+    const [ok, hdOk] = await Promise.all([imageExists(photoUrl(car, n, 300)), imageExists(photoUrl(car, n, 1920))]);
+    if (!ok) break;
+    if (hdOk) hd.push(n);
+    n++;
+  }
+  car.photos = n - 1; car.hd = hd; car.probed = true;
+}
+
 /* ---------- rendering ---------- */
 const app = document.getElementById('app');
 const grid = document.getElementById('car-grid');
 const HOME_SECTIONS = ['.hero', '.intro-strip', '.collection', '.manifesto', '.contact-band', '.method'];
+const activeFilter = () => document.querySelector('.filter.active')?.dataset.filter || 'all';
 
-function cardMarkup(car){return `<article class="car-card" data-category="${car.category}" data-id="${car.id}" tabindex="0" role="link" aria-label="Открыть ${car.name}">
-  <div class="car-image-wrap"><img class="car-image" src="${photoUrl(car,1,600)}" srcset="${photoSrcset(car,1,1200)}" sizes="${SIZES_CARD}" alt="${car.name}" loading="lazy" decoding="async"><span class="car-tag">${car.tag}</span></div>
-  <div class="car-card-top"><span class="car-year">${car.year} · ${car.location.toUpperCase()}</span><span class="car-price">${car.price}</span></div>
-  <h3>${car.name}</h3><div class="car-meta"><span>${car.mileage}</span><span>${car.power}</span><span>${car.gearbox.split(',')[0]}</span></div>
-  <span class="card-arrow">СМОТРЕТЬ АВТОМОБИЛЬ <span>↗</span></span></article>`}
+function cardMarkup(car){
+  const tag = CATEGORY_LABEL[car.category];
+  return `<article class="car-card" data-category="${esc(car.category)}" data-id="${esc(car.id)}" tabindex="0" role="link" aria-label="Открыть ${esc(car.name)}">
+  <div class="car-image-wrap"><img class="car-image" src="${photoUrl(car,1,600)}" srcset="${photoSrcset(car,1,1200)}" sizes="${SIZES_CARD}" alt="${esc(car.name)}" loading="lazy" decoding="async">${tag ? `<span class="car-tag">${tag}</span>` : ''}</div>
+  <div class="car-card-top"><span class="car-year">${esc(car.year)} · ${esc(car.location.toUpperCase())}</span>${car.price ? `<span class="car-price">${esc(car.price)}</span>` : ''}</div>
+  <h3>${esc(car.name)}</h3>
+  <span class="card-arrow">СМОТРЕТЬ АВТОМОБИЛЬ <span>↗</span></span></article>`;
+}
 
-function renderGrid(filter='all'){grid.innerHTML=cars.filter(c=>filter==='all'||c.category===filter).map(cardMarkup).join('');}
+function renderGrid(filter = activeFilter()){
+  grid.innerHTML = cars.filter(c => filter === 'all' || c.category === filter).map(cardMarkup).join('');
+  const all = document.querySelector('.filter[data-filter="all"] span');
+  if (all) all.textContent = pad(cars.length, 2);
+}
 
 function thumbsMarkup(car){
   if (photoCount(car) < 2) return '';
@@ -70,31 +127,43 @@ function thumbsMarkup(car){
   return `<div class="gallery-thumbs">${html}</div>`;
 }
 
-function detailMarkup(car){return `<section class="detail-shell" data-car="${car.id}">
+function titleMarkup(name){
+  const i = name.indexOf(' ');
+  return i < 0 ? `<em>${esc(name)}</em>` : `${esc(name.slice(0, i))} <em>${esc(name.slice(i + 1))}</em>`;
+}
+
+function detailMarkup(car){
+  const rows = SPEC_ROWS.filter(([k]) => car[k]).map(([k, label]) => `<div class="spec-row"><dt>${label}</dt><dd>${esc(car[k])}</dd></div>`).join('');
+  return `<section class="detail-shell" data-car="${esc(car.id)}">
   <a class="back-link" href="#/"><span>←</span> НАЗАД К НАХОДКАМ</a>
-  <div class="detail-title-row"><div><p class="eyebrow">TROVATA IN ITALIA · ${car.year}</p><h1>${car.name.replace(' ', ' <em>')}</em></h1></div><div class="detail-price">${car.price}</div></div>
-  <div class="detail-layout"><div><div class="gallery-main"><img id="gallery-main-image" src="${photoUrl(car,1,1200)}" srcset="${photoSrcset(car,1)}" sizes="${SIZES_MAIN}" alt="${car.name} — фотография"></div>${thumbsMarkup(car)}</div>
-  <aside class="spec-card"><p class="eyebrow">SCHEDA TECNICA</p><h2>Характеристики</h2><dl class="spec-list">
-  <div class="spec-row"><dt>Год выпуска</dt><dd>${car.year}</dd></div><div class="spec-row"><dt>Пробег</dt><dd>${car.mileage}</dd></div><div class="spec-row"><dt>Двигатель</dt><dd>${car.engine}</dd></div><div class="spec-row"><dt>Мощность</dt><dd>${car.power}</dd></div><div class="spec-row"><dt>Коробка передач</dt><dd>${car.gearbox}</dd></div><div class="spec-row"><dt>Топливо</dt><dd>${car.fuel}</dd></div><div class="spec-row"><dt>Привод</dt><dd>${car.drive}</dd></div><div class="spec-row"><dt>Местонахождение</dt><dd>${car.location}</dd></div><div class="spec-row"><dt>Состояние</dt><dd>${car.condition}</dd></div></dl>
-  <p class="spec-note">Цена указана для примера. Финальные условия, документы, осмотр и логистика обсуждаются индивидуально.</p><a class="button button-dark" href="mailto:ciao@italianfinds.example?subject=${encodeURIComponent('Запрос: '+car.name)}">Запросить информацию <span>↗</span></a></aside></div>
-  <div class="detail-story"><p class="eyebrow">LA STORIA</p><h2>У этой находки есть характер.</h2><p>${car.story}</p></div>
-  <p class="detail-disclaimer">ДЕМОНСТРАЦИОННЫЙ МАКЕТ · Автомобиль, изображения, пробег, характеристики и цена приведены только для визуального примера и не являются предложением о продаже.</p>
-  </section>`}
+  <div class="detail-title-row"><div><p class="eyebrow">TROVATA IN ITALIA · ${esc(car.year)}</p><h1>${titleMarkup(car.name)}</h1></div><div class="detail-price">${esc(car.price || 'Цена по запросу')}</div></div>
+  <div class="detail-layout"><div><div class="gallery-main"><img id="gallery-main-image" src="${photoUrl(car,1,1200)}" srcset="${photoSrcset(car,1)}" sizes="${SIZES_MAIN}" alt="${esc(car.name)} — фотография"></div><div class="gallery-thumbs-slot"></div></div>
+  <aside class="spec-card"><p class="eyebrow">SCHEDA TECNICA</p><h2>Характеристики</h2><dl class="spec-list">${rows}</dl>
+  <p class="spec-note">Финальные условия, документы, осмотр и логистика обсуждаются индивидуально.</p><a class="button button-dark" href="mailto:ciao@italianfinds.example?subject=${encodeURIComponent('Запрос: '+car.name)}">Запросить информацию <span>↗</span></a></aside></div>
+  <div class="detail-story"><p class="eyebrow">LA STORIA</p><h2>У этой находки есть характер.</h2><p>${esc(car.story || 'Подробное описание, история владения, документы и результаты осмотра — по запросу.')}</p></div>
+  </section>`;
+}
 
 function setHomeVisible(visible){
   HOME_SECTIONS.forEach(sel => { const el = document.querySelector(sel); if (el) el.style.display = visible ? '' : 'none'; });
 }
 
-function renderRoute(){
+async function renderRoute(){
   const id = location.hash.match(/^#\/car\/(.+)$/)?.[1];
+  const old = document.querySelector('.detail-shell');
+  if (old) old.remove();
   if (!id) { setHomeVisible(true); renderGrid(); window.scrollTo(0,0); return; }
   const car = cars.find(c => c.id === id);
   if (!car) { location.hash = '#/'; return; }
   setHomeVisible(false);
-  const old = document.querySelector('.detail-shell');
-  if (old) old.remove();
   app.insertAdjacentHTML('afterbegin', detailMarkup(car));
   window.scrollTo(0,0);
+  // photos are discovered after the page is shown, then thumbnails / HD are filled in
+  await discoverPhotos(car);
+  const shell = document.querySelector('.detail-shell');
+  if (!shell || shell.dataset.car !== car.id) return;   // user navigated away meanwhile
+  shell.querySelector('.gallery-thumbs-slot').innerHTML = thumbsMarkup(car);
+  document.getElementById('gallery-main-image').srcset = photoSrcset(car, 1);
 }
 
 function showPhoto(car, n){
@@ -135,4 +204,8 @@ document.querySelector('.menu-toggle').addEventListener('click', () => {
   nav.style.top = '72px'; nav.style.left = '0'; nav.style.right = '0';
   nav.style.padding = '22px 7%'; nav.style.background = 'var(--paper)'; nav.style.flexDirection = 'column';
 });
-renderRoute();
+
+loadCars().then(renderRoute).catch(err => {
+  console.error(err);
+  grid.innerHTML = `<p class="load-error">Не удалось загрузить список автомобилей (${esc(CARS_FILE)}). Откройте сайт через веб-сервер (например, <code>python3 -m http.server</code>), а не как файл.</p>`;
+});
