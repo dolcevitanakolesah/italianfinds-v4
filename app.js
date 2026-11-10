@@ -177,7 +177,7 @@ function widthForScreen(car, n){
 /* ---------- rendering ---------- */
 const app = document.getElementById('app');
 const grid = document.getElementById('car-grid');
-const HOME_SECTIONS = ['.hero', '.intro-strip', '.collection', '.manifesto', '.contact-band', '.method'];
+const HOME_SECTIONS = ['.hero', '.intro-strip', '.collection', '.method', '.manifesto', '.contact-band'];
 const activeFilter = () => document.querySelector('.filter.active')?.dataset.filter || 'all';
 
 function cardMeta(car){
