@@ -32,3 +32,11 @@
 /* Home images: lighter files on smaller screens, 1920 for very wide ones */
 @media(max-width:1200px){.hero-photo{background-image:url('./assets/Home/Hero-01-1200.webp')}}
 @media(min-width:1500px){.manifesto-image{background-image:url('./assets/Home/Manifesto-01-1920.webp')}}
+
+/* Rounded image corners — change the one number below to adjust them all */
+:root{--radius-img:10px}
+.hero,.hero-photo,.hero-shade,
+.car-image-wrap,.car-image,
+.manifesto-image,
+.gallery-main,.gallery-main img,
+.gallery-thumb,.gallery-thumb img{border-radius:var(--radius-img)}
