@@ -63,7 +63,7 @@ history: Text of the car's history.
 - If the file is missing, the car still appears (name from `cars.txt`, no specs).
 
 ## Other content
-- Hero image: `assets/hero-barn.webp` (set in `styles.css`). Manifesto image: URL in `styles.css`.
+- Hero and manifesto images: `assets/Home/` (`Hero-01-*.webp`, `Manifesto-01-*.webp`). Their brightness, saturation and contrast are set in `assets/Home/Home-Settings.txt` (percent, 100 = unchanged).
 - Contact email: replace `ciao@italianfinds.example` in `index.html` and `app.js`.
 - Brand colours and typography: CSS variables at the top of `styles.css`.
 

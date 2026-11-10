@@ -331,3 +331,18 @@ loadCars().then(renderRoute).catch(err => {
   console.error(err);
   grid.innerHTML = `<p class="load-error">Не удалось загрузить список автомобилей (${esc(CARS_FILE)}). Откройте сайт через веб-сервер (например, <code>python3 -m http.server</code>), а не как файл.</p>`;
 });
+
+/* ---------- home image look: assets/Home/Home-Settings.txt ----------
+   brightness / saturation / contrast in percent for the hero and manifesto
+   images (100 = unchanged). Missing file or line = built-in defaults. */
+(async function loadHomeSettings(){
+  try {
+    const res = await fetch('assets/Home/Home-Settings.txt', {cache:'no-cache'});
+    if (!res.ok) return;
+    const root = document.documentElement.style;
+    for (const raw of (await res.text()).replace(/^\uFEFF/, '').split(/\r?\n/)) {
+      const m = raw.match(/^\s*(hero|manifesto)-(brightness|saturation|contrast)\s*:\s*([\d.]+)/i);
+      if (m) root.setProperty(`--${m[1].toLowerCase()}-${m[2].toLowerCase()}`, String(parseFloat(m[3]) / 100));
+    }
+  } catch (e) { /* keep defaults */ }
+})();
