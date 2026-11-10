@@ -1,0 +1,19 @@
+# Image look for the home page: assets/Home/Home-Settings.txt
+#
+# Values are percentages. 100 = image exactly as exported (no change).
+#   brightness:  below 100 = darker,        above 100 = lighter
+#   saturation:  below 100 = more muted,    above 100 = more vivid, 0 = black & white
+#   contrast:    below 100 = flatter,       above 100 = punchier
+#
+# Edit a number, save, reload the site. Lines starting with # are ignored.
+# If a line is missing, the default is 100.
+
+# Top image: Hero-01
+hero-brightness: 100
+hero-saturation: 88
+hero-contrast: 100
+
+# Bottom image: Manifesto-01
+manifesto-brightness: 100
+manifesto-saturation: 85
+manifesto-contrast: 100
